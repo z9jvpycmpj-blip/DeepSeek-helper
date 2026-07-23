@@ -332,6 +332,7 @@ function collectFormData() {
 
   const data = {
     gender: document.querySelector('input[name="gender"]:checked')?.value || 'male',
+    hatRequest: document.getElementById('hatRequest').value.trim(),
     bodyData: {
       height: Number(h),
       weight: Number(w),
@@ -424,6 +425,25 @@ async function generatePlan() {
     planOutput.innerHTML = marked.parse(result.plan || '');
     resultArea.classList.add('visible');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // ─── 记录统计数据（静默，不影响体验） ───
+    fetch('/api/stats/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gender: data.gender,
+        height: data.bodyData.height,
+        weight: data.bodyData.weight,
+        shoulder: data.bodyData.shoulder,
+        waist: data.bodyData.waist,
+        hip: data.bodyData.hip,
+        leg: data.bodyData.leg,
+        skintone: data.bodyData.skintone,
+        scenario: data.scenario,
+        hatRequest: data.hatRequest,
+        customerRequest: data.customerRequest,
+      }),
+    }).catch(() => {});
 
   } catch (err) {
     showError(err.message || '出错了，请稍后再试');
