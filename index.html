@@ -174,6 +174,19 @@
       📐 你的身体数据
       <span class="badge">越详细越精准</span>
     </div>
+
+    <!-- 性别 -->
+    <div style="margin-bottom: 18px; display: flex; gap: 24px; padding-bottom: 14px; border-bottom: 1px solid #efebe6;">
+      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #2d2d2d;">
+        <input type="radio" name="gender" value="male" checked style="width: 16px; height: 16px; accent-color: #c9a96e;">
+        🧑 男士
+      </label>
+      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #2d2d2d;">
+        <input type="radio" name="gender" value="female" style="width: 16px; height: 16px; accent-color: #c9a96e;">
+        👩 女士
+      </label>
+    </div>
+
     <div class="form-grid">
       <div class="form-group">
         <label>身高 (cm)</label>
@@ -226,10 +239,17 @@
         <label>你有什么特别要求？<span class="placeholder-tip">（颜色偏好 / 风格倾向 / 忌讳 / 其他想法）</span></label>
         <textarea id="request" placeholder="e.g. 想要看起来稳重但不老气 / 不喜欢穿裙子 / 希望显高…"></textarea>
       </div>
+      <div class="form-group full-width" style="padding-top: 2px;">
+        <label>🧢 帽子搭配 <span class="placeholder-tip">（选填 · 推荐 / 指定款式 / 不要）</span></label>
+        <input type="text" id="hatRequest" placeholder="e.g. 推荐几款搭配的帽子 / 我有一顶黑色贝雷帽，帮我搭配 / 不需要帽子">
+      </div>
     </div>
 
     <div class="quick-example">
-      💡 试试：<a onclick="fillExample()">填入示例数据看看效果</a>
+      💡 试试：
+      <a onclick="fillExampleMale()">👔 男士示例</a>
+      &nbsp;·&nbsp;
+      <a onclick="fillExampleFemale()">👗 女士示例</a>
     </div>
   </div>
 
@@ -275,16 +295,30 @@ marked.setOptions({
 });
 
 // ===== 示例数据填充 =====
-function fillExample() {
-  document.getElementById('height').value = 172;
-  document.getElementById('weight').value = 68;
-  document.getElementById('shoulder').value = 44;
+function fillExampleMale() {
+  document.querySelector('input[name="gender"][value="male"]').checked = true;
+  document.getElementById('height').value = 175;
+  document.getElementById('weight').value = 72;
+  document.getElementById('shoulder').value = 46;
   document.getElementById('waist').value = 82;
-  document.getElementById('hip').value = 93;
-  document.getElementById('leg').value = 82;
+  document.getElementById('hip').value = 94;
+  document.getElementById('leg').value = 83;
   document.getElementById('skintone').value = 'warm';
   document.getElementById('scenario').value = '去一家不错的餐厅约会，第一次见面';
   document.getElementById('request').value = '想要看起来挺拔精神，但不显刻意';
+}
+
+function fillExampleFemale() {
+  document.querySelector('input[name="gender"][value="female"]').checked = true;
+  document.getElementById('height').value = 163;
+  document.getElementById('weight').value = 55;
+  document.getElementById('shoulder').value = 37;
+  document.getElementById('waist').value = 66;
+  document.getElementById('hip').value = 91;
+  document.getElementById('leg').value = 78;
+  document.getElementById('skintone').value = 'cool';
+  document.getElementById('scenario').value = '参加闺蜜婚礼，做宾客';
+  document.getElementById('request').value = '想要得体不出风头，但也要好看';
 }
 
 // ===== 收集表单数据 =====
@@ -297,6 +331,7 @@ function collectFormData() {
   }
 
   const data = {
+    gender: document.querySelector('input[name="gender"]:checked')?.value || 'male',
     bodyData: {
       height: Number(h),
       weight: Number(w),
@@ -321,8 +356,10 @@ function collectFormData() {
 // ===== 构建用户输入文本 =====
 function buildPrompt(data) {
   const b = data.bodyData;
+  const genderLabel = data.gender === 'male' ? '男' : '女';
   let text = `帮我出穿搭方案。\n\n`;
 
+  text += `【性别】${genderLabel}\n\n`;
   text += `【我的身材数据】\n`;
   text += `身高 ${b.height}cm，体重 ${b.weight}kg`;
   if (b.shoulder) text += `，肩宽 ${b.shoulder}cm`;
@@ -339,6 +376,11 @@ function buildPrompt(data) {
 
   if (data.customerRequest) {
     text += `\n【特别要求】\n${data.customerRequest}\n`;
+  }
+
+  const hatReq = document.getElementById('hatRequest').value.trim();
+  if (hatReq) {
+    text += `\n【帽子】${hatReq}\n`;
   }
 
   return text;
