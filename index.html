@@ -102,22 +102,102 @@
   .btn-action.copied { background: #e8f5e9; border-color: #66bb6a; color: #2e7d32; }
 
   /* ===== 方案渲染 ===== */
-  .plan-output { line-height: 1.8; }
-  .plan-output h2 { font-size: 18px; color: #1a1a2e; margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #c9a96e; }
-  .plan-output h3 { font-size: 15px; color: #1a1a2e; margin: 16px 0 6px; }
-  .plan-output p { margin: 6px 0; }
-  .plan-output ul, .plan-output ol { padding-left: 20px; margin: 6px 0; }
-  .plan-output li { margin: 3px 0; }
-  .plan-output strong { color: #1a1a2e; }
-  .plan-output hr { border: none; border-top: 1px solid #e8e3dd; margin: 16px 0; }
+  .plan-output { line-height: 1.9; color: #2d2d2d; }
+
+  /* 方案概览卡片 */
+  .plan-output .summary-box {
+    background: linear-gradient(135deg, #faf8f5 0%, #f5f0ea 100%);
+    border: 1px solid #e8e3dd; border-radius: 10px;
+    padding: 18px 20px; margin: 0 0 20px 0;
+  }
+  .plan-output .summary-box .summary-label {
+    font-size: 13px; font-weight: 600; color: #c9a96e; letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .plan-output .summary-box .summary-text {
+    font-size: 15px; color: #1a1a2e; font-weight: 500; line-height: 1.6;
+  }
+
+  /* 风格关键词行 */
+  .plan-output .keywords-line {
+    margin: 0 0 16px 0; padding: 0;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .plan-output .keywords-line .keyword-tag {
+    display: inline-block; background: #f0ede8; color: #6b6b6b;
+    padding: 2px 14px; border-radius: 14px; font-size: 13px;
+  }
+
+  /* 主标题 (━━━ 分隔行) */
+  .plan-output hr {
+    border: none; border-top: 2px solid #1a1a2e; margin: 24px 0 14px;
+    opacity: 0.15;
+  }
+
+  /* 二级标题 (📋 👤 🎨 👔 等) */
+  .plan-output h3 {
+    font-size: 15px; font-weight: 600; color: #1a1a2e;
+    margin: 18px 0 6px; padding: 0 0 4px 0;
+    border-bottom: 1px solid #efebe6;
+  }
+
+  .plan-output p {
+    margin: 4px 0; padding-left: 2px; font-size: 14.5px;
+  }
+
+  .plan-output ul, .plan-output ol {
+    padding-left: 22px; margin: 4px 0 8px;
+  }
+  .plan-output li {
+    margin: 3px 0; font-size: 14.5px;
+  }
+  .plan-output strong {
+    color: #1a1a2e; font-weight: 600;
+  }
+
+  /* 依据标注 */
+  .plan-output em {
+    color: #8a8a8a; font-style: normal; font-size: 13px;
+  }
+
   .plan-output blockquote {
-    border-left: 3px solid #c9a96e; padding: 8px 16px; margin: 12px 0;
+    border-left: 3px solid #c9a96e; padding: 8px 16px; margin: 10px 0;
     background: #faf8f5; border-radius: 0 6px 6px 0; color: #6b6b6b; font-style: italic;
   }
   .plan-output code {
     background: #f0ede8; padding: 1px 6px; border-radius: 4px; font-size: 13px;
   }
   .plan-output .emoji { font-style: normal; }
+
+  /* 色块 */
+  .color-swatch {
+    display: inline-block; width: 16px; height: 16px;
+    border-radius: 50%; vertical-align: middle;
+    margin: 0 4px 0 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* 搭配方案格子 */
+  .plan-output .outfit-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+    margin: 8px 0;
+  }
+  .plan-output .outfit-item {
+    padding: 8px 10px; background: #fcfcfa;
+    border-radius: 6px; border: 1px solid #efebe6;
+    font-size: 14px;
+  }
+  .plan-output .outfit-item .item-label {
+    font-size: 11px; color: #b0a8a0; letter-spacing: 1px;
+  }
+  .plan-output .outfit-item .item-value {
+    font-weight: 500; color: #1a1a2e;
+  }
+
+  @media (max-width: 480px) {
+    .plan-output .outfit-grid { grid-template-columns: 1fr; }
+    .plan-output .summary-box { padding: 14px 16px; }
+  }
 
   /* ===== 错误 ===== */
   .error-box {
@@ -294,6 +374,92 @@ marked.setOptions({
   gfm: true,
 });
 
+// ===== 颜色名称 → hex 映射 =====
+const COLOR_MAP = {
+  '黑色': '#1a1a1a', '黑': '#1a1a1a',
+  '白色': '#ffffff', '白': '#ffffff',
+  '米白': '#faf0e6', '象牙白': '#fffff0', '本白': '#fffaf0',
+  '灰色': '#8c8c8c', '灰': '#8c8c8c',
+  '浅灰': '#d4d4d4', '深灰': '#4a4a4a', '炭灰': '#363636', '烟灰': '#b0b0b0',
+  '红色': '#c0392b', '红': '#c0392b',
+  '酒红': '#722f37', '砖红': '#b24332', '暗红': '#8b1a1a', '枣红': '#7a1a1a',
+  '蓝色': '#2c5f8a', '蓝': '#2c5f8a',
+  '海军蓝': '#1a2744', '深蓝': '#1a2744', '藏蓝': '#191970', '靛蓝': '#3b5998',
+  '天蓝': '#87ceeb', '浅蓝': '#add8e6', '宝蓝': '#4169e1', '牛仔蓝': '#4a6fa5',
+  '绿色': '#4a7c59', '绿': '#4a7c59',
+  '墨绿': '#2d5a3d', '军绿': '#5c6b4a', '草绿': '#7c9d6e', '橄榄绿': '#6b8e23',
+  '黄色': '#e8c44a', '黄': '#e8c44a',
+  '米色': '#f5e6c8', '驼色': '#b89a74', '卡其': '#c3b091', '燕麦': '#dcc8b0',
+  '棕色': '#8b6914', '棕': '#8b6914',
+  '咖啡': '#6b4423', '深棕': '#4a3728', '可可': '#7b5b3a',
+  '紫色': '#6b4c7a', '紫': '#6b4c7a',
+  '淡紫': '#c8a2c8', '薰衣草': '#b2a4d4', '紫罗兰': '#8a6ea0',
+  '粉色': '#f4b3c2', '粉': '#f4b3c2',
+  '玫瑰粉': '#e8a0bf', '珊瑚': '#ff7f50', '芭比粉': '#ff69b4',
+  '橙色': '#e07a2f', '橙': '#e07a2f',
+  '杏色': '#f7d6b5', '橘': '#e8863a',
+  '金色': '#c9a96e', '金': '#c9a96e',
+  '香槟': '#f7e7ce', '古铜': '#cd7f32',
+  '银色': '#c0c0c0', '银': '#c0c0c0',
+};
+
+// ===== 增强方案渲染 =====
+function renderPlan(markdown) {
+  let html = marked.parse(markdown);
+
+  // ── 方案概览 → highlight box ──
+  html = html.replace(
+    /<p>✨ 方案概览<\/p>\s*<p>(.+?)<\/p>/g,
+    '<div class="summary-box"><div class="summary-label">✨ 方案概览</div><div class="summary-text">$1</div></div>'
+  );
+
+  // ── 🎯 风格关键词 → tag pills ──
+  html = html.replace(
+    /<p>🎯 风格关键词<\/p>\s*<p>(.+?)<\/p>/g,
+    (match, keywords) => {
+      const tags = keywords.split('·').map(k => k.trim()).filter(k => k);
+      const pills = tags.map(t => `<span class="keyword-tag">${t}</span>`).join('');
+      return `<p>🎯 风格关键词</p><div class="keywords-line">${pills}</div>`;
+    }
+  );
+
+  // ── 👔 搭配方案 → grid layout ──
+  html = html.replace(
+    /<p>👔 搭配方案<\/p>([\s\S]*?)(?=<p>[🎨🔄💡📋👤]|$)/g,
+    (match, content) => {
+      // Extract list items
+      const items = content.match(/<li>(.+?)<\/li>/g);
+      if (!items || items.length === 0) return match;
+      const grid = items.map(li => {
+        const text = li.replace(/<\/?li>/g, '').trim();
+        const colonIdx = text.indexOf('：');
+        if (colonIdx === -1) {
+          return `<div class="outfit-item"><div class="item-value">${text}</div></div>`;
+        }
+        const label = text.substring(0, colonIdx);
+        const value = text.substring(colonIdx + 1);
+        return `<div class="outfit-item"><div class="item-label">${label}</div><div class="item-value">${value}</div></div>`;
+      }).join('');
+      return `<p>👔 搭配方案</p><div class="outfit-grid">${grid}</div>`;
+    }
+  );
+
+  // ── 色块注入（按名称长度降序处理，避免"黑"吃掉"黑色"）──
+  const sortedColors = Object.entries(COLOR_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [name, hex] of sortedColors) {
+    const needBorder = (hex === '#ffffff' || hex === '#faf0e6' || hex === '#fffff0'
+      || hex === '#fffaf0' || hex === '#f7e7ce');
+    const border = needBorder ? ' style="border:1px solid #ddd;"' : '';
+    const swatch = `<span class="color-swatch" style="background:${hex}"${border}></span>`;
+    html = html.replace(
+      new RegExp(`(?:(?<=主色[：:])|(?<=辅色[：:])|(?<=点缀色[：:]))[^<]*?\\b${name}`, 'g'),
+      (match) => match.replace(name, swatch + name)
+    );
+  }
+
+  return html;
+}
+
 // ===== 示例数据填充 =====
 function fillExampleMale() {
   document.querySelector('input[name="gender"][value="male"]').checked = true;
@@ -421,8 +587,8 @@ async function generatePlan() {
 
     const result = await res.json();
 
-    // 渲染 Markdown
-    planOutput.innerHTML = marked.parse(result.plan || '');
+    // 渲染增强方案
+    planOutput.innerHTML = renderPlan(result.plan || '');
     resultArea.classList.add('visible');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
