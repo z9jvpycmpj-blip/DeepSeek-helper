@@ -1,7 +1,7 @@
 // ============================================================
 // SSE 穿搭顾问 · API 后端
 // 部署平台：Vercel (Node.js 18+ Serverless Function)
-// 环境变量：CLAUDE_API_KEY (必填)
+// 环境变量：DEEPSEEK_API_KEY (必填)
 // ============================================================
 
 // ─── System Prompt：SSE 穿搭知识体系 ──────────────────────
@@ -74,8 +74,11 @@ const SYSTEM_PROMPT = `你是一位专业的「场景穿搭顾问」，具备裁
 
 如果数据不足（只有身高体重，没有围度），给出初步建议，同时友善说明"如果你提供肩宽/腰围/臀围，可以给出更精准的方案"。`;
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-20250514';
+// ─── DeepSeek 官方 API ──────────────────────────────────
+// 文档：https://api-docs.deepseek.com/zh-cn/
+// DeepSeek API 完全兼容 OpenAI API 格式
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const MODEL = 'deepseek-chat';    // DeepSeek 最新通用模型
 const MAX_TOKENS = 4096;
 
 export default async function handler(req, res) {
@@ -93,9 +96,9 @@ export default async function handler(req, res) {
   }
 
   // ─── 验证 API Key ───
-  const apiKey = process.env.CLAUDE_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    console.error('❌ 环境变量 CLAUDE_API_KEY 未设置');
+    console.error('❌ 环境变量 DEEPSEEK_API_KEY 未设置');
     return res.status(500).json({ error: '服务端配置错误：API Key 未设置' });
   }
 
@@ -107,34 +110,46 @@ export default async function handler(req, res) {
 
   console.log('📥 收到请求，长度:', userInput.length, '字符');
 
-  // ─── 调用 Claude API ───
+  // ─── 调用 DeepSeek API ───
   try {
-    const response = await fetch(ANTHROPIC_API_URL, {
+    const response = await fetch(DEEPSEEK_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
         temperature: 0.7,
-        system: SYSTEM_PROMPT,
+        // DeepSeek 完全兼容 OpenAI 消息格式
         messages: [
-          { role: 'user', content: userInput }
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userInput },
         ],
       }),
     });
 
     if (!response.ok) {
       const errorBody = await response.text().catch(() => '');
-      console.error('❌ Claude API 错误:', response.status, errorBody);
-      return res.status(502).json({ error: `AI 服务调用失败 (${response.status})` });
+      console.error('❌ DeepSeek API 错误:', response.status, errorBody);
+      // 尝试解析错误详情
+      let detail = '';
+      try {
+        const errJson = JSON.parse(errorBody);
+        detail = errJson.error?.message || errJson.message || '';
+      } catch {}
+      return res.status(502).json({
+        error: `AI 服务调用失败 (${response.status})`,
+        detail: detail || undefined,
+      });
     }
 
     const data = await response.json();
-    const plan = data.content?.[0]?.text || '';
+
+    // DeepSeek 返回格式（OpenAI 兼容）：
+    // data.choices[0].message.content
+    const plan = data.choices?.[0]?.message?.content || '';
 
     if (!plan) {
       console.error('❌ AI 返回内容为空:', JSON.stringify(data));
