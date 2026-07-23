@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSE 穿搭顾问 — 你适合穿什么</title>
+<style>
+  /* ===== 重置 & 基础 ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #faf8f5; color: #2d2d2d; line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ===== 布局 ===== */
+  .container { max-width: 720px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ===== 头部 ===== */
+  header { text-align: center; padding: 40px 0 32px; }
+  .logo { font-size: 28px; font-weight: 300; letter-spacing: 4px; color: #1a1a2e; }
+  .logo span { color: #c9a96e; font-weight: 400; }
+  .subtitle { font-size: 14px; color: #8a8a8a; margin-top: 6px; letter-spacing: 1px; }
+  .tagline {
+    margin-top: 12px; font-size: 13px; color: #b8a88a;
+    border-top: 1px solid #e8e3dd; padding-top: 14px;
+    max-width: 400px; margin-left: auto; margin-right: auto;
+  }
+
+  /* ===== 卡片 ===== */
+  .card {
+    background: #fff; border-radius: 12px; padding: 28px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px;
+    border: 1px solid #efebe6;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: #1a1a2e;
+    margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .badge {
+    font-size: 11px; background: #f0ede8; color: #6b6b6b;
+    padding: 1px 10px; border-radius: 10px; font-weight: 400;
+  }
+
+  /* ===== 表单 ===== */
+  .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .form-grid .full-width { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label {
+    font-size: 12px; font-weight: 500; color: #6b6b6b;
+    letter-spacing: 0.3px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 10px 12px; border: 1px solid #e0dbd4; border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: #2d2d2d;
+    background: #fcfcfa; transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: #c9a96e; background: #fff;
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group .hint { font-size: 11px; color: #b0a8a0; margin-top: 2px; }
+
+  /* ===== 提交按钮 ===== */
+  .submit-area { text-align: center; margin: 24px 0 0; }
+  .btn-submit {
+    background: #1a1a2e; color: #fff; border: none;
+    padding: 14px 48px; border-radius: 8px; font-size: 16px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 2px;
+  }
+  .btn-submit:hover { background: #2a2a4e; transform: translateY(-1px); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-submit .spinner { display: none; }
+  .btn-submit.loading .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== 结果区域 ===== */
+  #result-area { display: none; }
+  #result-area.visible { display: block; }
+  .result-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .result-header h2 { font-size: 16px; font-weight: 600; color: #1a1a2e; }
+  .result-actions { display: flex; gap: 8px; }
+  .btn-action {
+    background: none; border: 1px solid #e0dbd4; border-radius: 6px;
+    padding: 6px 14px; font-size: 12px; color: #6b6b6b; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .btn-action:hover { border-color: #c9a96e; color: #1a1a2e; }
+  .btn-action.copied { background: #e8f5e9; border-color: #66bb6a; color: #2e7d32; }
+
+  /* ===== 方案渲染 ===== */
+  .plan-output { line-height: 1.8; }
+  .plan-output h2 { font-size: 18px; color: #1a1a2e; margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 2px solid #c9a96e; }
+  .plan-output h3 { font-size: 15px; color: #1a1a2e; margin: 16px 0 6px; }
+  .plan-output p { margin: 6px 0; }
+  .plan-output ul, .plan-output ol { padding-left: 20px; margin: 6px 0; }
+  .plan-output li { margin: 3px 0; }
+  .plan-output strong { color: #1a1a2e; }
+  .plan-output hr { border: none; border-top: 1px solid #e8e3dd; margin: 16px 0; }
+  .plan-output blockquote {
+    border-left: 3px solid #c9a96e; padding: 8px 16px; margin: 12px 0;
+    background: #faf8f5; border-radius: 0 6px 6px 0; color: #6b6b6b; font-style: italic;
+  }
+  .plan-output code {
+    background: #f0ede8; padding: 1px 6px; border-radius: 4px; font-size: 13px;
+  }
+  .plan-output .emoji { font-style: normal; }
+
+  /* ===== 错误 ===== */
+  .error-box {
+    background: #fff5f5; border: 1px solid #ffcdd2; border-radius: 8px;
+    padding: 16px; color: #c62828; font-size: 14px; margin-top: 12px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* ===== 快速填入示例 ===== */
+  .quick-example {
+    text-align: center; margin-top: 10px; font-size: 12px; color: #b0a8a0;
+  }
+  .quick-example a {
+    color: #c9a96e; cursor: pointer; text-decoration: none; border-bottom: 1px dashed #e0dbd4;
+  }
+  .quick-example a:hover { color: #1a1a2e; }
+
+  /* ===== 页脚 ===== */
+  footer {
+    text-align: center; padding: 32px 0 40px; font-size: 12px; color: #b0a8a0;
+  }
+  footer a { color: #8a8a8a; text-decoration: none; }
+  footer a:hover { color: #c9a96e; }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 480px) {
+    .container { padding: 16px 14px 40px; }
+    .card { padding: 20px 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .logo { font-size: 22px; }
+    .btn-submit { width: 100%; padding: 14px 24px; }
+    .result-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+  }
+
+  /* ===== 输入框占位符风格提示 ===== */
+  .placeholder-tip { color: #b0a8a0; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ====== 头部 ====== -->
+  <header>
+    <div class="logo">SSE <span>·</span> 穿搭顾问</div>
+    <div class="subtitle">输入你的身材与场景 · 获取专属穿搭方案</div>
+    <div class="tagline">「告诉我要去哪，剩下的交给我」</div>
+  </header>
+
+  <!-- ====== 表单卡片 ====== -->
+  <div class="card">
+    <div class="card-title">
+      📐 你的身体数据
+      <span class="badge">越详细越精准</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>身高 (cm)</label>
+        <input type="number" id="height" placeholder="e.g. 175" min="100" max="230">
+      </div>
+      <div class="form-group">
+        <label>体重 (kg)</label>
+        <input type="number" id="weight" placeholder="e.g. 70" min="30" max="200">
+      </div>
+      <div class="form-group">
+        <label>肩宽 (cm)</label>
+        <input type="number" id="shoulder" placeholder="e.g. 45" min="20" max="70">
+        <span class="hint">两肩点之间</span>
+      </div>
+      <div class="form-group">
+        <label>腰围 (cm)</label>
+        <input type="number" id="waist" placeholder="e.g. 80" min="40" max="150">
+        <span class="hint">腰部最细处</span>
+      </div>
+      <div class="form-group">
+        <label>臀围 (cm)</label>
+        <input type="number" id="hip" placeholder="e.g. 95" min="50" max="160">
+        <span class="hint">臀部最丰满处</span>
+      </div>
+      <div class="form-group">
+        <label>腿长 (cm)</label>
+        <input type="number" id="leg" placeholder="e.g. 85" min="40" max="130">
+        <span class="hint">腰线到脚底</span>
+      </div>
+      <div class="form-group full-width">
+        <label>肤色</label>
+        <select id="skintone">
+          <option value="">不太确定 → 我来判断</option>
+          <option value="warm">暖色调（偏黄）</option>
+          <option value="cool">冷色调（偏粉）</option>
+          <option value="neutral">中性色调</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 场景与需求</div>
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>你要去什么场合？</label>
+        <input type="text" id="scenario" placeholder="e.g. 明天面试 / 周末约会 / 参加朋友婚礼 / 日常通勤…">
+      </div>
+      <div class="form-group full-width">
+        <label>你有什么特别要求？<span class="placeholder-tip">（颜色偏好 / 风格倾向 / 忌讳 / 其他想法）</span></label>
+        <textarea id="request" placeholder="e.g. 想要看起来稳重但不老气 / 不喜欢穿裙子 / 希望显高…"></textarea>
+      </div>
+    </div>
+
+    <div class="quick-example">
+      💡 试试：<a onclick="fillExample()">填入示例数据看看效果</a>
+    </div>
+  </div>
+
+  <div class="submit-area">
+    <button class="btn-submit" id="btn-submit" onclick="generatePlan()">
+      <span class="spinner"></span>
+      <span class="text">生成穿搭方案</span>
+    </button>
+  </div>
+
+  <!-- ====== 错误提示 ====== -->
+  <div class="error-box" id="error-box"></div>
+
+  <!-- ====== 结果区域 ====== -->
+  <div id="result-area">
+    <div class="card" style="margin-top: 28px;">
+      <div class="result-header">
+        <h2>✨ 你的穿搭方案</h2>
+        <div class="result-actions">
+          <button class="btn-action" onclick="copyResult()" id="btn-copy">📋 复制</button>
+          <button class="btn-action" onclick="resetForm()">🔄 重新填写</button>
+        </div>
+      </div>
+      <div class="plan-output" id="plan-output"></div>
+    </div>
+  </div>
+
+  <!-- ====== 页脚 ====== -->
+  <footer>
+    <a href="#">SSE 智能场景穿搭引擎</a> · 建议仅供参考，最终以你的选择为准
+  </footer>
+
+</div>
+
+<!-- ====== marked.js (Markdown 渲染) ====== -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+// ===== 配置 marked =====
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+// ===== 示例数据填充 =====
+function fillExample() {
+  document.getElementById('height').value = 172;
+  document.getElementById('weight').value = 68;
+  document.getElementById('shoulder').value = 44;
+  document.getElementById('waist').value = 82;
+  document.getElementById('hip').value = 93;
+  document.getElementById('leg').value = 82;
+  document.getElementById('skintone').value = 'warm';
+  document.getElementById('scenario').value = '去一家不错的餐厅约会，第一次见面';
+  document.getElementById('request').value = '想要看起来挺拔精神，但不显刻意';
+}
+
+// ===== 收集表单数据 =====
+function collectFormData() {
+  const h = document.getElementById('height').value;
+  const w = document.getElementById('weight').value;
+  if (!h || !w) {
+    showError('请至少填写身高和体重');
+    return null;
+  }
+
+  const data = {
+    bodyData: {
+      height: Number(h),
+      weight: Number(w),
+      shoulder: document.getElementById('shoulder').value || null,
+      waist: document.getElementById('waist').value || null,
+      hip: document.getElementById('hip').value || null,
+      leg: document.getElementById('leg').value || null,
+      skintone: document.getElementById('skintone').value || null,
+    },
+    scenario: document.getElementById('scenario').value.trim() || '',
+    customerRequest: document.getElementById('request').value.trim() || '',
+  };
+
+  if (!data.scenario) {
+    showError('请告诉我你要去什么场合');
+    return null;
+  }
+
+  return data;
+}
+
+// ===== 构建用户输入文本 =====
+function buildPrompt(data) {
+  const b = data.bodyData;
+  let text = `帮我出穿搭方案。\n\n`;
+
+  text += `【我的身材数据】\n`;
+  text += `身高 ${b.height}cm，体重 ${b.weight}kg`;
+  if (b.shoulder) text += `，肩宽 ${b.shoulder}cm`;
+  if (b.waist) text += `，腰围 ${b.waist}cm`;
+  if (b.hip) text += `，臀围 ${b.hip}cm`;
+  if (b.leg) text += `，腿长 ${b.leg}cm`;
+  text += `\n`;
+  if (b.skintone) {
+    const toneMap = { warm: '暖色调（偏黄）', cool: '冷色调（偏粉）', neutral: '中性色调' };
+    text += `肤色：${toneMap[b.skintone] || b.skintone}\n`;
+  }
+
+  text += `\n【场景】\n${data.scenario}\n`;
+
+  if (data.customerRequest) {
+    text += `\n【特别要求】\n${data.customerRequest}\n`;
+  }
+
+  return text;
+}
+
+// ===== 调用 API =====
+async function generatePlan() {
+  const data = collectFormData();
+  if (!data) return;
+
+  const btn = document.getElementById('btn-submit');
+  const errorBox = document.getElementById('error-box');
+  const resultArea = document.getElementById('result-area');
+  const planOutput = document.getElementById('plan-output');
+
+  // 重置状态
+  errorBox.classList.remove('visible');
+  errorBox.textContent = '';
+  resultArea.classList.remove('visible');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.querySelector('.text').textContent = '正在思考你的穿搭…';
+
+  try {
+    const userInput = buildPrompt(data);
+
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userInput }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `服务器错误 (${res.status})`);
+    }
+
+    const result = await res.json();
+
+    // 渲染 Markdown
+    planOutput.innerHTML = marked.parse(result.plan || '');
+    resultArea.classList.add('visible');
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showError(err.message || '出错了，请稍后再试');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.querySelector('.text').textContent = '生成穿搭方案';
+  }
+}
+
+// ===== 显示错误 =====
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.textContent = msg;
+  box.classList.add('visible');
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ===== 复制结果 =====
+function copyResult() {
+  const text = document.getElementById('plan-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✅ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 复制';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    alert('复制失败，请手动选择文本复制');
+  });
+}
+
+// ===== 重置表单 =====
+function resetForm() {
+  document.getElementById('result-area').classList.remove('visible');
+  document.getElementById('error-box').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== 回车提交 =====
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey) {
+    generatePlan();
+  }
+});
+</script>
+
+</body>
+</html>
